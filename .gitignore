@@ -1,0 +1,59 @@
+# .gitignore
+# Use this file to tell git which files or directories to ignore (not track).
+# About ignoring files:
+# - Ignore OS and editor temporary files (e.g. .DS_Store, Thumbs.db).
+# - Ignore virtual environments, build artifacts, and dependencies (e.g. node_modules/).
+# - Large dataset files should be stored via Git LFS or external hosting; do NOT blindly
+#   add large dataset files here if you intend to version them with Git LFS.
+# - Lines starting with '#' are comments. Use a leading '/' to match paths relative to repo root.
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.env
+venv/
+.env/
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+
+# Node
+node_modules/
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+
+# IDEs
+.vscode/
+.idea/
+
+# Build/dist
+dist/
+build/
+*.egg
+
+# Archives and packages
+*.zip
+*.tar.gz
+*.rar
+
+# Data files
+# If you want to ignore dataset files (not version them), uncomment the following lines.
+# data/*.csv
+# data/*.xlsx
+
+# Note about Excel files and Git LFS:
+# If you intend to track large .xlsx files in this repo, use Git LFS instead of ignoring them.
