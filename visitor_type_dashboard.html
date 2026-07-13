@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Visitor Type & Purchase Behavior</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#F7F8FA;
+    --card:#FFFFFF;
+    --ink:#101828;
+    --sub:#4B5566;
+    --line:#E6E9EE;
+    --teal:#0D9488;      /* Returning Visitor */
+    --amber:#F59E0B;     /* New Visitor - the flagged insight */
+    --slate:#94A3B8;     /* Other */
+    --teal-glow: rgba(13,148,136,0.18);
+    --amber-glow: rgba(245,158,11,0.18);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:40px 28px 64px;
+  }
+
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    padding-bottom:22px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:28px;
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.14em;
+    color:var(--teal);
+    font-weight:700;
+    margin:0 0 6px;
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:27px;
+    letter-spacing:-0.01em;
+    margin:0 0 6px;
+    line-height:1.15;
+  }
+  .subtitle{
+    color:var(--sub);
+    font-size:14.5px;
+    margin:0;
+    max-width:560px;
+  }
+  .meta{
+    text-align:right;
+    font-size:12.5px;
+    color:var(--sub);
+    line-height:1.6;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .meta strong{ color:var(--ink); }
+
+  .section-label{
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:12.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--sub);
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-label::before{
+    content:"";
+    width:16px;
+    height:2px;
+    background:var(--teal);
+    display:inline-block;
+  }
+
+  .summary{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 26px;
+    margin-bottom:30px;
+    box-shadow:0 1px 2px rgba(16,24,40,0.04);
+  }
+  .summary p{
+    margin:0;
+    font-size:15px;
+    line-height:1.65;
+    color:#1D2733;
+  }
+  .summary b{ color:var(--ink); }
+  .highlight{
+    background:linear-gradient(transparent 60%, var(--amber-glow) 60%);
+    padding:0 1px;
+  }
+
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:34px;
+  }
+  .kpi{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi::after{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0;
+    width:3px;
+    background:var(--teal);
+  }
+  .kpi.flag::after{ background:var(--amber); }
+  .kpi.muted::after{ background:var(--slate); }
+  .kpi-label{
+    font-size:11.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--sub);
+    font-weight:600;
+    margin:0 0 8px;
+  }
+  .kpi-value{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+  }
+  .kpi.flag .kpi-value{ color:#B45309; }
+  .kpi-sub{
+    font-size:12px;
+    color:var(--sub);
+    margin-top:4px;
+  }
+
+  .chart-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px 22px 16px;
+    box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    margin-bottom:14px;
+  }
+  .chart-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .chart-card h3{
+    font-family:'Manrope', sans-serif;
+    font-size:14.5px;
+    font-weight:700;
+    margin:0 0 2px;
+    text-align:center;
+  }
+  .chart-card .caption{
+    font-size:12px;
+    color:var(--sub);
+    margin:0 0 10px;
+    text-align:center;
+  }
+  .chart-box{ position:relative; height:250px; }
+
+  .legend-strip{
+    display:flex;
+    justify-content:center;
+    gap:26px;
+    align-items:center;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px 20px;
+    margin-bottom:30px;
+    box-shadow:0 1px 2px rgba(16,24,40,0.04);
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:var(--ink);
+    font-weight:600;
+  }
+  .swatch{
+    width:12px; height:12px; border-radius:3px;
+    display:inline-block;
+  }
+  .swatch.teal{ background:var(--teal); }
+  .swatch.amber{ background:var(--amber); }
+  .swatch.slate{ background:var(--slate); }
+
+  .insights{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px 26px 8px;
+    box-shadow:0 1px 2px rgba(16,24,40,0.04);
+  }
+  .insight{
+    display:grid;
+    grid-template-columns:34px 1fr;
+    gap:14px;
+    padding:14px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .insight:last-child{ border-bottom:none; }
+  .insight .num{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    color:var(--teal);
+    padding-top:2px;
+  }
+  .insight .body strong{
+    font-family:'Manrope', sans-serif;
+    font-size:14.5px;
+    font-weight:700;
+    display:block;
+    margin-bottom:4px;
+    color:var(--ink);
+  }
+  .insight .body p{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--sub);
+  }
+  .insight .body .rec{
+    color:#0F5B54;
+    font-weight:600;
+  }
+
+  .rec-section{
+    margin-top:30px;
+  }
+  .rec-list{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+  .rec-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:3px solid var(--amber);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    box-shadow:0 1px 2px rgba(16,24,40,0.04);
+  }
+  .rec-card .rec-num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--amber);
+    font-weight:700;
+    letter-spacing:0.06em;
+    margin-bottom:6px;
+  }
+  .rec-card p{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.55;
+    color:#1D2733;
+  }
+
+  footer{
+    margin-top:26px;
+    font-size:11.5px;
+    color:#9AA4B2;
+    text-align:center;
+  }
+
+  @media (max-width:760px){
+    .kpi-row{ grid-template-columns:1fr; }
+    .chart-row{ grid-template-columns:1fr; }
+    .rec-list{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">E-Commerce Analytics · Visitor Segmentation</p>
+      <h1>Visitor Type & Purchase Behavior</h1>
+      <p class="subtitle">Comparing visitor-type composition between purchasing and non-purchasing sessions.</p>
+    </div>
+    <div class="meta">
+      Dataset: <strong>Online Shoppers Purchasing Intention</strong><br>
+      Segment field: <strong>VisitorType</strong><br>
+      Prepared for: <strong>Stakeholder Review</strong>
+    </div>
+  </header>
+
+  <div class="summary">
+    <p class="section-label" style="margin-bottom:10px;">Executive Summary</p>
+    <p>Returning Visitors dominate both purchasing and non-purchasing sessions, making them the site's largest traffic and revenue base. However, <b class="highlight">New Visitors nearly double their share when a purchase occurs — from 12% to 22%</b> — indicating they convert disproportionately well relative to how rarely they appear in the overall traffic mix. The "Other" category remains statistically negligible in both groups.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi flag">
+      <p class="kpi-label">New Visitor Share Shift</p>
+      <div class="kpi-value">12% → 22%</div>
+      <p class="kpi-sub">Non-purchase → Purchase sessions</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi-label">Returning Visitor Share of Purchases</p>
+      <div class="kpi-value">77%</div>
+      <p class="kpi-sub">Down from 87% of non-purchases</p>
+    </div>
+    <div class="kpi muted">
+      <p class="kpi-label">"Other" Visitor Share</p>
+      <div class="kpi-value">1%</div>
+      <p class="kpi-sub">Consistent across both groups</p>
+    </div>
+  </div>
+
+  <p class="section-label">Visitor Type Composition — Purchase vs. No Purchase</p>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <h3>No Purchase (Revenue = FALSE)</h3>
+      <p class="caption">Visitor type share among non-converting sessions</p>
+      <div class="chart-box"><canvas id="pieFalse"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Purchase (Revenue = TRUE)</h3>
+      <p class="caption">Visitor type share among converting sessions</p>
+      <div class="chart-box"><canvas id="pieTrue"></canvas></div>
+    </div>
+  </div>
+
+  <div class="legend-strip">
+    <span class="legend-item"><span class="swatch teal"></span>Returning Visitor</span>
+    <span class="legend-item"><span class="swatch amber"></span>New Visitor</span>
+    <span class="legend-item"><span class="swatch slate"></span>Other</span>
+  </div>
+
+  <p class="section-label">Key Insights</p>
+  <div class="insights">
+
+    <div class="insight">
+      <div class="num">01</div>
+      <div class="body">
+        <strong>Returning Visitors generate the majority of purchases in absolute terms.</strong>
+        <p>At 77% of all purchasing sessions, Returning Visitors remain the primary revenue-driving segment — any conversion strategy still needs to center on this group's experience.</p>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="num">02</div>
+      <div class="body">
+        <strong>New Visitors convert at a disproportionately higher rate per session.</strong>
+        <p>Their share nearly doubles between outcomes (12% → 22%), meaning a New Visitor session is meaningfully more likely to end in a purchase than their overall traffic share would predict.</p>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="num">03</div>
+      <div class="body">
+        <strong>Returning Visitors under-convert relative to their traffic volume.</strong>
+        <p>Their share drops 10 percentage points from non-purchase to purchase sessions (87% → 77%) — a signal of missed revenue given how large this segment already is.</p>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="num">04</div>
+      <div class="body">
+        <strong>"Other" visitor type is not a meaningful segment for strategy.</strong>
+        <p>Holding steady at 1% in both groups, this category is too small to influence business decisions and can be excluded from segmentation-driven initiatives.</p>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="num">05</div>
+      <div class="body">
+        <strong>Visitor type is a genuine conversion-intent signal.</strong>
+        <p>The composition shift between outcomes confirms VisitorType carries predictive value and is a strong candidate feature for conversion models or real-time targeting rules.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rec-section">
+    <p class="section-label">Actionable Recommendations</p>
+    <div class="rec-list">
+      <div class="rec-card">
+        <div class="rec-num">RECOMMENDATION 01</div>
+        <p>Double down on first-visit conversion: New Visitors already convert well — targeted first-session incentives (welcome discounts, guided product discovery) could compound an already-strong effect.</p>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">RECOMMENDATION 02</div>
+        <p>Investigate Returning Visitor drop-off: with the largest traffic base but a lower relative conversion share, diagnose friction points — retargeting fatigue, stale offers, or cart abandonment among repeat visitors.</p>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">RECOMMENDATION 03</div>
+        <p>Add VisitorType as a segmentation feature in personalization and predictive-conversion models, since it meaningfully shifts between purchase outcomes.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>Percentages reflect visitor-type composition within each purchase outcome (Revenue = TRUE / FALSE), as shown in the source pie charts.</footer>
+
+</div>
+
+<script>
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#4B5566';
+
+const colors = {
+  Returning: '#0D9488',
+  New: '#F59E0B',
+  Other: '#94A3B8'
+};
+
+function makePie(canvasId, data){
+  new Chart(document.getElementById(canvasId), {
+    type:'pie',
+    data:{
+      labels:['Returning Visitor','New Visitor','Other'],
+      datasets:[{
+        data:data,
+        backgroundColor:[colors.Returning, colors.New, colors.Other],
+        borderColor:'#FFFFFF',
+        borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          callbacks:{ label:(ctx)=> ` ${ctx.label}: ${ctx.parsed}%` }
+        },
+        datalabels:false
+      }
+    },
+    plugins:[{
+      id:'sliceLabels',
+      afterDraw(chart){
+        const {ctx} = chart;
+        chart.data.datasets[0].data.forEach((value, i)=>{
+          const meta = chart.getDatasetMeta(0);
+          const arc = meta.data[i];
+          if(!arc) return;
+          const pos = arc.tooltipPosition();
+          if(value < 2) return; // skip label clutter for tiny slices
+          ctx.save();
+          ctx.font = "700 13px 'JetBrains Mono', monospace";
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(value + '%', pos.x, pos.y);
+          ctx.restore();
+        });
+      }
+    }]
+  });
+}
+
+makePie('pieFalse', [87, 12, 1]);
+makePie('pieTrue',  [77, 22, 1]);
+</script>
+</body>
+</html>
